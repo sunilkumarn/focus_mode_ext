@@ -18,14 +18,14 @@ h1 {
 
 #header {
     display: flex;
-    padding: 8px;
+    padding: 8px 16px;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgb(var(--color-secondary-300) / var(--tw-border-opacity, 1));
+    border-bottom: 2px dashed #797675
 }
 
 #website-list {
-    padding: 8px 16px;
+    padding: 16px;
     background: linear-gradient(to bottom right, #eef2ff, #e0e7ff);
 }
 
@@ -64,7 +64,7 @@ h1 {
 }
 
 #add-website-btn {
-    width: 90%;
+    width: 100%;
     padding: 8px;
     border: 2px dashed #6366f1;
     color: #6366f1;
@@ -78,6 +78,6 @@ h1 {
     text-align: center;
     font-size: 12px;
     color: #666;
-    padding: 8px;
-    border-top: 1px solid rgb(var(--color-secondary-300) / var(--tw-border-opacity, 1));
+    padding: 8px 16px;
+    border-top: 2px dashed #797675
 }
