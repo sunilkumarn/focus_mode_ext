@@ -1,71 +1,204 @@
+
 body {
-    width: 250px;
-    background: linear-gradient(to bottom right, #eef2ff, #e0e7ff);
-    padding: 8px 16px;
+    width: 300px;
     font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #ffffff;
 }
 
 .popup-container {
     display: flex;
     flex-direction: column;
-    gap: 16px;
 }
 
 h1 {
     font-size: 18px;
     font-weight: bold;
     color: #333;
+    margin: 0;
+}
+
+h2 {
+    font-size: 16px;
+    margin: 0 0 15px 0;
+    color: #333;
 }
 
 #header {
     display: flex;
+    padding: 20px;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 2px solid #e5e5e5;
 }
 
-#enable-btn {
-    background-color: #4f46e5;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: none;
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
     cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #4f46e5;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Block Current Website */
+#block-current {
+    padding: 15px;
+    background-color: #f0f4ff;
+}
+
+#block-this-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.block-icon {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+/* Website List */
+#website-list {
+    padding: 15px;
+    background-color: #ffffff;
+}
+
+#websites-container {
+    margin-bottom: 15px;
 }
 
 .website-input-group {
     display: flex;
     align-items: center;
-    /* gap: 8px; */
-    padding: 0 0 8px;
+    margin-bottom: 10px;
 }
 
 .website-input-group input {
     flex: 1;
-    padding: 6px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 10px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 14px;
 }
 
 .delete-btn {
     background: none;
     border: none;
+    color: #ef4444;
     font-size: 18px;
     cursor: pointer;
+    margin-left: 8px;
 }
 
 #add-website-btn {
-    width: 90%;
-    padding: 8px;
-    border: 2px dashed #6366f1;
+    width: 100%;
+    padding: 10px;
+    border: 2px dashed #d1d5db;
     color: #6366f1;
     background: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plus-icon {
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+/* Reminder Settings */
+#reminder-settings {
+    padding: 15px;
+    background-color: #e0e7ff;
+    border-top: 2px solid #e5e5e5;
+}
+
+.reminder-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+#reminder-time {
+    padding: 5px 10px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background-color: #ffffff;
+    font-size: 14px;
 }
 
 #footer {
     text-align: center;
     font-size: 12px;
     color: #666;
+    padding: 10px;
+    border-top: 2px solid #e5e5e5;
+}
+
+.logo-section h1 {
+    font-size: 1.8rem; /* Slightly larger for emphasis */
+    font-weight: 700; /* Bold */
+    color: #4a4a4a; /* Dark gray for 'focus' */
+    letter-spacing: 0.5px; /* Slight letter spacing for clarity */
+}
+
+.logo-section h1 span {
+    color: #007bff; /* Blue color for 'Mode' */
+    font-weight: 700;
 }

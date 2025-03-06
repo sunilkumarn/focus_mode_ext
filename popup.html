@@ -1,36 +1,59 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus Mode</title>
-    <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-    <div id="popup" class="popup-container">
-        <section id="header">
-            <h1>Focus Mode</h1>
-            <button id="enable-btn">Enable</button>
-        </section>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Focus Mode</title>
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <div id="popup" class="popup-container">
+            <section id="header" class="logo-section">
+                <h1>focus<span>mode</span></h1>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-btn" />
+                    <span class="slider round"></span>
+                </label>
+            </section>
 
-        <section id="website-list">
-            <div class="website-input-group">
-                <input type="text" placeholder="Enter website URL">
-                <button class="delete-btn">🗑️</button>
-            </div>
-            <div class="website-input-group">
-                <input type="text" placeholder="Enter website URL">
-                <button class="delete-btn">🗑️</button>
-            </div>
-            <button id="add-website-btn">➕ Add Website</button>
-        </section>
+            <section id="block-current">
+                <button id="block-this-btn">
+                    <span class="block-icon">⊘</span> Block this site
+                </button>
+            </section>
 
-        <section id="footer">
-            <p>Stay focused, boost productivity!</p>
-        </section>
-    </div>
+            <section id="website-list">
+                <h2>Your blocked websites</h2>
+                <div id="websites-container">
+                    <!-- Website inputs will be added here dynamically -->
+                </div>
+                <button id="add-website-btn">
+                    <span class="plus-icon">+</span> Add Website
+                </button>
+            </section>
 
-    <script src="popup.js" defer></script>
-    <script src="tailwind.js"></script>
-</body>
+            <section id="reminder-settings">
+                <h2>Reminder Settings</h2>
+                <div class="reminder-container">
+                    <span>Remind me in</span>
+                    <select id="reminder-time">
+                        <option value="1">1 minute</option>
+                        <option value="5">5 minutes</option>
+                        <option value="10">10 minutes</option>
+                        <option value="15">15 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="0">never</option>
+                    </select>
+                    <span>to turn on focus mode</span>
+                </div>
+            </section>
+
+            <section id="footer">
+                <p>Stay focused, boost productivity!</p>
+            </section>
+        </div>
+
+        <script src="popup.js" defer></script>
+    </body>
 </html>

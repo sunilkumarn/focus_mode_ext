@@ -1,4 +1,19 @@
-modules = ["nodejs-20", "web"]
+modules = ["nodejs-20", "web", "nix"]
 
 [nix]
 channel = "stable-24_05"
+
+[workflows]
+runButton = "Preview Extension"
+
+[[workflows.workflow]]
+name = "Preview Extension"
+author = 39344928
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js"
+
+[[ports]]
+localPort = 3000
+externalPort = 80

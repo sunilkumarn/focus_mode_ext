@@ -1,12 +1,13 @@
 let isBlocking = false;
-let blockList = ["facebook.com", "youtube.com", "twitter.com"]; // Default blocklist
+let blockList = [ ]; // Default blocklist
 let reminderTimeout;
-const reminderInterval = 10 * 60 * 1000; // 10 minutes
+let reminderInterval = 0; // 0 minutes
 
 // Load saved state from storage
-chrome.storage.sync.get(["isBlocking", "blockList"], (data) => {
+chrome.storage.sync.get(["isBlocking", "blockList", "reminderInterval"], (data) => {
   if (data.isBlocking !== undefined) isBlocking = data.isBlocking;
   if (data.blockList) blockList = data.blockList;
+  if (data.reminderInterval) reminderInterval = data.reminderInterval;
   updateIcon();
   manageBlocking();
 });
@@ -36,6 +37,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: true }); // Respond back to the sender
             }
         });
+    } else if (message.action === "updateReminderInterval") {
+        reminderInterval = message.reminderInterval;
+        chrome.storage.sync.set({ reminderInterval }, () => {
+            if (chrome.runtime.lastError) {
+                console.error("Error saving reminder interval:", chrome.runtime.lastError);
+                sendResponse({ success: false }); // Respond with failure
+            } else {
+                resetReminder();
+                sendResponse({ success: true }); // Respond back to the sender
+            }
+        });
     }
     return true; // Keeps the message port open for asynchronous response
 });
@@ -53,28 +65,62 @@ function updateIcon() {
   });
 }
 
+function getRootDomain(url) {
+    const parts = url.split(".");
+    if (parts.length > 2) {
+        return parts.slice(-2).join("."); // Extracts root domain (e.g., google.com)
+    }
+    return url; // Already a root domain
+}
+
 // Manage website blocking
 function manageBlocking() {
-    console.log(`isBlocking: ${isBlocking}`); 
-    if (isBlocking) {
-        const urlFilter = blockList.length > 0
-            ? blockList.map(site => `*://*.${site}/*`).join("|")
-            : null;
+    chrome.declarativeNetRequest.getDynamicRules((existingRules) => {
+        const existingRuleIds = existingRules.map(rule => rule.id); // Get all current rule IDs
+        
+        const rules = [];
+        const uniqueDomains = new Set();
 
-        console.log(`urlFilter: ${urlFilter}`) ; 
+        blockList.forEach((site, index) => {
+            const rootDomain = getRootDomain(site);
+            if (uniqueDomains.has(rootDomain)) return; // Avoid duplicate rules
+            uniqueDomains.add(rootDomain);
 
-        if (urlFilter) {
-            chrome.declarativeNetRequest.updateDynamicRules({
-                removeRuleIds: [1],
-                addRules: [{
-                    id: 1,
+            const rootDomainId = index * 2 + 1;
+            const subDomainId = index * 2 + 2;
+
+            rules.push(
+                {
+                    id: rootDomainId, // Unique ID for root domain
                     priority: 1,
-                    action: { type: "block" },
+                    action: { 
+                        type: "redirect",
+                        redirect: { extensionPath: "/blocker.html" } // Redirect to local page
+                    },
                     condition: {
-                        urlFilter: urlFilter,
+                        urlFilter: `*://${site}/*`, // Blocks root domain
                         resourceTypes: ["main_frame"],
                     },
-                }],
+                },
+                {
+                    id: subDomainId, // Unique ID for subdomains
+                    priority: 1,
+                    action: { 
+                        type: "redirect",
+                        redirect: { extensionPath: "/blocker.html" } // Redirect to local page
+                    },
+                    condition: {
+                        urlFilter: `*://*.${site}/*`, // Blocks all subdomains
+                        resourceTypes: ["main_frame"],
+                    },
+                }
+            );
+        });
+
+        if (isBlocking) {
+            chrome.declarativeNetRequest.updateDynamicRules({
+                removeRuleIds: existingRuleIds, // Remove only the exact IDs used
+                addRules: rules, // Add new blocking rules
             }, () => {
                 if (chrome.runtime.lastError) {
                     console.error("Error updating blocking rules:", chrome.runtime.lastError);
@@ -82,29 +128,30 @@ function manageBlocking() {
             });
 
         } else {
-            // If no blocklist items, remove blocking rules
-            chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [1] });
+            chrome.declarativeNetRequest.updateDynamicRules({
+                removeRuleIds: existingRuleIds,
+            }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error("Error removing blocking rules:", chrome.runtime.lastError);
+                }
+            });
         }
-    } else {
-        chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [1] }, () => {
-            if (chrome.runtime.lastError) {
-              console.error("Error removing blocking rules:", chrome.runtime.lastError);
-            }
-          });
-    }
+    });
 }
 
 // Reset the reminder timer
 function resetReminder() {
-  if (reminderTimeout) clearTimeout(reminderTimeout);
-  if (!isBlocking) {
-    reminderTimeout = setTimeout(() => {
-      chrome.notifications.create({
-        type: "basic",
-        iconUrl: "icons/icon_off_128.png", // Ensure this icon exists
-        title: "Focus Reminder",
-        message: "You've been browsing too long! Consider re-enabling focus mode.",
-      });
-    }, reminderInterval);
+    chrome.alarms.clear("focusReminder", () => {
+      if (!isBlocking & reminderInterval != 0) {
+        chrome.alarms.create("focusReminder", { delayInMinutes: reminderInterval / 60000 });
+      }
+    });
   }
-}
+  
+  // Listen for alarm trigger
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "focusReminder") {
+        chrome.tabs.create({ url: "distraction.html" });
+    }
+});
+  
