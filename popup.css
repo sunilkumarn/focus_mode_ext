@@ -32,6 +32,10 @@ h1 {
     cursor: pointer;
 }
 
+#enable-btn.disabled {
+    background-color: #c04025;
+}
+
 .website-input-group {
     display: flex;
     align-items: center;

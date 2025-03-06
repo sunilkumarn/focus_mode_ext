@@ -5,6 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     chrome.storage.sync.get(["isBlocking", "blockList"], (data) => {
         toggleBtn.textContent = data.isBlocking ? "Disable" : "Enable";
+        if (data.isBlocking) {
+            toggleBtn.classList.add("disabled");
+        } else {
+            toggleBtn.classList.remove("disabled");
+        }
 
         // Clear default website inputs
         while (websiteList.children.length > 1) {
@@ -21,7 +26,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     toggleBtn.addEventListener("click", () => {
         chrome.runtime.sendMessage({ action: "toggleBlocking" });
-        toggleBtn.textContent = toggleBtn.textContent === "Enable" ? "Disable" : "Enable";
+        if (toggleBtn.textContent === "Enable") {
+            toggleBtn.textContent = "Disable";
+            toggleBtn.classList.add("disabled");
+        } else {
+            toggleBtn.textContent = "Enable";
+            toggleBtn.classList.remove("disabled");
+        }
     });
 
     addSiteBtn.addEventListener("click", () => addBlockListRow(""));
