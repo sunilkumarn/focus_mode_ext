@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         div.appendChild(input);
         div.appendChild(deleteBtn);
-        websiteList.appendChild(div);
+        websiteList.insertBefore(div, addWebsiteBtn);
     });
 
     document.querySelectorAll(".delete-btn").forEach((btn) =>
