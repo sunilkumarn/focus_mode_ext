@@ -1,8 +1,26 @@
 document.addEventListener("DOMContentLoaded", function () {
     const addWebsiteBtn = document.getElementById("add-website-btn");
     const websiteList = document.getElementById("website-list");
+    
+    // Remove any existing click handler from popup.js to avoid conflicts
+    const toggleBtn = document.getElementById("enable-btn");
+    toggleBtn.replaceWith(toggleBtn.cloneNode(true));
+    const newToggleBtn = document.getElementById("enable-btn");
+    
+    // Add the toggle functionality here
+    newToggleBtn.addEventListener("click", function() {
+        chrome.runtime.sendMessage({ action: "toggleBlocking" });
+        if (newToggleBtn.textContent === "Enable") {
+            newToggleBtn.textContent = "Disable";
+            newToggleBtn.classList.add("disabled");
+        } else {
+            newToggleBtn.textContent = "Enable";
+            newToggleBtn.classList.remove("disabled");
+        }
+    });
 
     addWebsiteBtn.addEventListener("click", function () {
+</old_str>
         const div = document.createElement("div");
         div.classList.add("website-input-group");
 

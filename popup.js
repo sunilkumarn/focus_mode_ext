@@ -24,16 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.runtime.sendMessage({ action: "updateBlockList", blockList: savedBlockList });
     });
 
-    toggleBtn.addEventListener("click", () => {
-        chrome.runtime.sendMessage({ action: "toggleBlocking" });
-        if (toggleBtn.textContent === "Enable") {
-            toggleBtn.textContent = "Disable";
-            toggleBtn.classList.add("disabled");
-        } else {
-            toggleBtn.textContent = "Enable";
-            toggleBtn.classList.remove("disabled");
-        }
-    });
+    // Event listener moved to tailwind.js to prevent conflicts
 
     addSiteBtn.addEventListener("click", () => addBlockListRow(""));
 

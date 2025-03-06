@@ -33,7 +33,8 @@ h1 {
 }
 
 #enable-btn.disabled {
-    background-color: #c04025;
+    background-color: #c04025 !important;
+    color: white !important;
 }
 
 .website-input-group {
