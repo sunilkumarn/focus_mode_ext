@@ -1,43 +1,42 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus Mode</title>
-    <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-    <div id="popup" class="popup-container">
-        <section id="header">
-            <h1>Focus Mode</h1>
-            <label class="toggle-switch">
-                <input type="checkbox" id="toggle-btn">
-                <span class="slider round"></span>
-            </label>
-        </section>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Focus Mode</title>
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <div id="popup" class="popup-container">
+            <section id="header">
+                <h1>Focus Mode</h1>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggle-btn" />
+                    <span class="slider round"></span>
+                </label>
+            </section>
 
-        <section id="block-current">
-            <button id="block-this-btn">
-                <span class="block-icon">⊘</span> Block this website
-            </button>
-        </section>
+            <section id="block-current">
+                <button id="block-this-btn">
+                    <span class="block-icon">⊘</span> Block this site
+                </button>
+            </section>
 
-        <section id="website-list">
-            <h2>List of Websites</h2>
-            <div id="websites-container">
-                <!-- Website inputs will be added here dynamically -->
-            </div>
-            <button id="add-website-btn">
-                <span class="plus-icon">+</span> Add Website
-            </button>
-        </section>
+            <section id="website-list">
+                <h2>Your blocked websites</h2>
+                <div id="websites-container">
+                    <!-- Website inputs will be added here dynamically -->
+                </div>
+                <button id="add-website-btn">
+                    <span class="plus-icon">+</span> Add Website
+                </button>
+            </section>
 
-        <section id="footer">
-            <p>Stay focused, boost productivity!</p>
-        </section>
-    </div>
+            <section id="footer">
+                <p>Stay focused & kill it!</p>
+            </section>
+        </div>
 
-    <script src="popup.js" defer></script>
-</body>
+        <script src="popup.js" defer></script>
+    </body>
 </html>
