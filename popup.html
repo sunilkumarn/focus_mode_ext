@@ -1,4 +1,5 @@
-    <!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,19 +11,26 @@
     <div id="popup" class="popup-container">
         <section id="header">
             <h1>Focus Mode</h1>
-            <button id="enable-btn">Enable</button>
+            <label class="toggle-switch">
+                <input type="checkbox" id="toggle-btn">
+                <span class="slider round"></span>
+            </label>
+        </section>
+
+        <section id="block-current">
+            <button id="block-this-btn">
+                <span class="block-icon">⊘</span> Block this website
+            </button>
         </section>
 
         <section id="website-list">
-            <div class="website-input-group">
-                <input type="text" placeholder="Enter website URL">
-                <button class="delete-btn">🗑️</button>
+            <h2>List of Websites</h2>
+            <div id="websites-container">
+                <!-- Website inputs will be added here dynamically -->
             </div>
-            <div class="website-input-group">
-                <input type="text" placeholder="Enter website URL">
-                <button class="delete-btn">🗑️</button>
-            </div>
-            <button id="add-website-btn">➕ Add Website</button>
+            <button id="add-website-btn">
+                <span class="plus-icon">+</span> Add Website
+            </button>
         </section>
 
         <section id="footer">
@@ -31,6 +39,5 @@
     </div>
 
     <script src="popup.js" defer></script>
-    <script src="tailwind.js"></script>
 </body>
 </html>

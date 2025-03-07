@@ -1,20 +1,13 @@
+
 document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.getElementById("enable-btn");
-    const websiteList = document.getElementById("website-list");
+    const toggleBtn = document.getElementById("toggle-btn");
+    const websitesContainer = document.getElementById("websites-container");
     const addSiteBtn = document.getElementById("add-website-btn");
+    const blockThisBtn = document.getElementById("block-this-btn");
 
+    // Initialize popup state
     chrome.storage.sync.get(["isBlocking", "blockList"], (data) => {
-        toggleBtn.textContent = data.isBlocking ? "Disable" : "Enable";
-        if (data.isBlocking) {
-            toggleBtn.classList.add("disabled");
-        } else {
-            toggleBtn.classList.remove("disabled");
-        }
-
-        // Clear default website inputs
-        while (websiteList.children.length > 1) {
-            websiteList.removeChild(websiteList.firstChild);
-        }
+        toggleBtn.checked = data.isBlocking || false;
 
         // Add saved websites
         const savedBlockList = data.blockList || [];
@@ -24,18 +17,43 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.runtime.sendMessage({ action: "updateBlockList", blockList: savedBlockList });
     });
 
-    toggleBtn.addEventListener("click", () => {
-        chrome.runtime.sendMessage({ action: "toggleBlocking" });
-        if (toggleBtn.textContent === "Enable") {
-            toggleBtn.textContent = "Disable";
-            toggleBtn.classList.add("disabled");
-        } else {
-            toggleBtn.textContent = "Enable";
-            toggleBtn.classList.remove("disabled");
-        }
+    // Toggle focus mode
+    toggleBtn.addEventListener("change", () => {
+        chrome.runtime.sendMessage({ action: "toggleBlocking" }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("Error toggling blocking:", chrome.runtime.lastError);
+                toggleBtn.checked = !toggleBtn.checked; // Revert if there was an error
+            }
+        });
     });
 
-    addSiteBtn.addEventListener("click", () => addBlockListRow(""));
+    // Block current website button
+    blockThisBtn.addEventListener("click", () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs.length > 0) {
+                try {
+                    const url = new URL(tabs[0].url);
+                    const domain = url.hostname.replace(/^www\./, '');
+                    
+                    // Check if domain is already in the list
+                    const inputs = Array.from(websitesContainer.querySelectorAll(".website-input-group input"));
+                    const exists = inputs.some(input => input.value === domain);
+                    
+                    if (!exists) {
+                        addBlockListRow(domain);
+                        saveBlockList();
+                    }
+                } catch (e) {
+                    console.error("Invalid URL:", e);
+                }
+            }
+        });
+    });
+
+    // Add new website input
+    addSiteBtn.addEventListener("click", () => {
+        addBlockListRow("");
+    });
 
     function addBlockListRow(url) {
         const row = document.createElement("div");
@@ -60,12 +78,11 @@ document.addEventListener("DOMContentLoaded", () => {
         row.appendChild(input);
         row.appendChild(deleteBtn);
 
-        // Insert before the add button
-        websiteList.insertBefore(row, addSiteBtn);
+        websitesContainer.appendChild(row);
     }
 
     function saveBlockList() {
-        const sites = Array.from(websiteList.querySelectorAll(".website-input-group input"))
+        const sites = Array.from(websitesContainer.querySelectorAll(".website-input-group input"))
             .map(input => input.value.trim())
             .filter(Boolean);
 
