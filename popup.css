@@ -163,7 +163,7 @@ input:checked + .slider:before {
 /* Reminder Settings */
 #reminder-settings {
     padding: 15px;
-    background-color: #ffffff;
+    background-color: #e0e7ff;
     border-top: 2px solid #e5e5e5;
 }
 
