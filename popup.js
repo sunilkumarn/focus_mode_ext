@@ -4,17 +4,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const websitesContainer = document.getElementById("websites-container");
     const addSiteBtn = document.getElementById("add-website-btn");
     const blockThisBtn = document.getElementById("block-this-btn");
+    const reminderTime = document.getElementById("reminder-time");
 
     // Initialize popup state
-    chrome.storage.sync.get(["isBlocking", "blockList"], (data) => {
+    chrome.storage.sync.get(["isBlocking", "blockList", "reminderInterval"], (data) => {
         toggleBtn.checked = data.isBlocking || false;
 
         // Add saved websites
         const savedBlockList = data.blockList || [];
         savedBlockList.forEach(site => addBlockListRow(site));
 
+        // Set saved reminder time (default 10 minutes)
+        const savedReminderMinutes = data.reminderInterval ? data.reminderInterval / (60 * 1000) : 10;
+        reminderTime.value = savedReminderMinutes.toString();
+
         // Ensure blocklist is correctly saved
         chrome.runtime.sendMessage({ action: "updateBlockList", blockList: savedBlockList });
+    });
+
+    // Update reminder time setting
+    reminderTime.addEventListener("change", () => {
+        const minutes = parseInt(reminderTime.value);
+        const milliseconds = minutes * 60 * 1000;
+        chrome.storage.sync.set({ reminderInterval: milliseconds }, () => {
+            chrome.runtime.sendMessage({ action: "updateReminderInterval", reminderInterval: milliseconds });
+        });
     });
 
     // Toggle focus mode

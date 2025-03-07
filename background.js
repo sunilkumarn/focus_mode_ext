@@ -4,9 +4,10 @@ let reminderTimeout;
 const reminderInterval = 10 * 60 * 1000; // 10 minutes
 
 // Load saved state from storage
-chrome.storage.sync.get(["isBlocking", "blockList"], (data) => {
+chrome.storage.sync.get(["isBlocking", "blockList", "reminderInterval"], (data) => {
   if (data.isBlocking !== undefined) isBlocking = data.isBlocking;
   if (data.blockList) blockList = data.blockList;
+  if (data.reminderInterval) reminderInterval = data.reminderInterval;
   updateIcon();
   manageBlocking();
 });
@@ -33,6 +34,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: false }); // Respond with failure
             } else {
                 manageBlocking();
+                sendResponse({ success: true }); // Respond back to the sender
+            }
+        });
+    } else if (message.action === "updateReminderInterval") {
+        reminderInterval = message.reminderInterval;
+        chrome.storage.sync.set({ reminderInterval }, () => {
+            if (chrome.runtime.lastError) {
+                console.error("Error saving reminder interval:", chrome.runtime.lastError);
+                sendResponse({ success: false }); // Respond with failure
+            } else {
+                resetReminder();
                 sendResponse({ success: true }); // Respond back to the sender
             }
         });
