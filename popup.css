@@ -7,7 +7,6 @@ body {
 .popup-container {
     display: flex;
     flex-direction: column;
-    gap: 16px;
 }
 
 h1 {
@@ -21,7 +20,7 @@ h1 {
     padding: 8px 16px;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px dashed #797675
+    border-bottom: 2px solid #797675
 }
 
 #website-list {
@@ -79,5 +78,5 @@ h1 {
     font-size: 12px;
     color: #666;
     padding: 8px 16px;
-    border-top: 2px dashed #797675
+    border-top: 2px solid #797675
 }
