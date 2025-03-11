@@ -98,7 +98,7 @@ function manageBlocking() {
                         redirect: { extensionPath: "/blocker.html" } // Redirect to local page
                     },
                     condition: {
-                        urlFilter: `*://${site}/*`, // Blocks root domain
+                        urlFilter: `*://${rootDomain}/*`, // Blocks root domain
                         resourceTypes: ["main_frame"],
                     },
                 },
@@ -110,7 +110,7 @@ function manageBlocking() {
                         redirect: { extensionPath: "/blocker.html" } // Redirect to local page
                     },
                     condition: {
-                        urlFilter: `*://*.${site}/*`, // Blocks all subdomains
+                        urlFilter: `*://*.${rootDomain}/*`, // Blocks all subdomains
                         resourceTypes: ["main_frame"],
                     },
                 }

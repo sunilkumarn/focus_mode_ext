@@ -7,8 +7,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const reminderTime = document.getElementById("reminder-time");
     const reminderSection = document.getElementById("reminder-settings");
 
+    function getRootDomain(url) {
+        const parts = url.split(".");
+        if (parts.length > 2) {
+            return parts.slice(-2).join("."); // Extracts root domain (e.g., google.com)
+        }
+        return url; // Already a root domain
+    }
+    
     function updateReminderVisibility () {
-        console.log(`Loding reminder section, ${toggleBtn.checked}`)
         if(!toggleBtn.checked) {
             reminderSection.style.display = "block";
         } else {
@@ -60,13 +67,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 try {
                     const url = new URL(tabs[0].url);
                     const domain = url.hostname.replace(/^www\./, '');
+                    const rootDomain = getRootDomain(domain)
                     
                     // Check if domain is already in the list
                     const inputs = Array.from(websitesContainer.querySelectorAll(".website-input-group input"));
-                    const exists = inputs.some(input => input.value === domain);
+                    const exists = inputs.some(input => input.value === rootDomain);
                     
                     if (!exists) {
-                        addBlockListRow(domain);
+                        addBlockListRow(rootDomain);
                         saveBlockList();
                     }
                 } catch (e) {
