@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const blockThisBtn = document.getElementById("block-this-btn");
     const reminderTime = document.getElementById("reminder-time");
     const reminderSection = document.getElementById("reminder-settings");
+    let clientId = '' ;
 
     function getRootDomain(url) {
         const parts = url.split(".");
@@ -17,16 +18,23 @@ document.addEventListener("DOMContentLoaded", () => {
     
     function updateReminderVisibility () {
         if(!toggleBtn.checked) {
-            reminderSection.style.display = "block";
+            reminderSection.style.display = "block";    
         } else {
             reminderSection.style.display = "none";
         }
     }
 
     // Initialize popup state
-    chrome.storage.sync.get(["isBlocking", "blockList", "reminderInterval"], (data) => {
+    chrome.storage.sync.get(["isBlocking", "blockList", "reminderInterval", "clientId"], (data) => {
         toggleBtn.checked = data.isBlocking || false;
         updateReminderVisibility() ; 
+
+        if (data.clientId) {
+            clientId = data.clientId
+        } else {
+            clientId = self.crypto.randomUUID();
+            chrome.storage.sync.set({clientId});
+        }
 
         // Add saved websites
         const savedBlockList = data.blockList || [];
@@ -44,6 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
     reminderTime.addEventListener("change", () => {
         const minutes = parseInt(reminderTime.value);
         const milliseconds = minutes * 60 * 1000;
+        sendAnalyticsEvent('set_focus_reminder', {
+            reminder_time: minutes
+        })
         chrome.storage.sync.set({ reminderInterval: milliseconds }, () => {
             chrome.runtime.sendMessage({ action: "updateReminderInterval", reminderInterval: milliseconds });
         });
@@ -56,6 +67,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error("Error toggling blocking:", chrome.runtime.lastError);
                 toggleBtn.checked = !toggleBtn.checked; // Revert if there was an error
             }
+
+            let event = toggleBtn.checked ? 'focusmode_on' : 'focusmode_off'
+            sendAnalyticsEvent(event)
+
             updateReminderVisibility() ; 
         });
     });
@@ -76,6 +91,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (!exists) {
                         addBlockListRow(rootDomain);
                         saveBlockList();
+                        sendAnalyticsEvent('website_blocked_via_button', {
+                            website_url: url 
+                        })
                     }
                 } catch (e) {
                     console.log("Invalid URL");
@@ -102,12 +120,20 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteBtn.className = "delete-btn";
         deleteBtn.textContent = "🗑️";
 
-        deleteBtn.addEventListener("click", () => {
+        deleteBtn.addEventListener("click", (url) => {
+            sendAnalyticsEvent('website_unblocked', {
+                website_url: url 
+            })
             row.remove();
             saveBlockList();
         });
 
-        input.addEventListener("change", saveBlockList);
+        input.addEventListener("change", (url) => {
+            sendAnalyticsEvent('website_blocked', {
+                website_url: url 
+            })
+            saveBlockList() ; 
+        });
 
         row.appendChild(input);
         row.appendChild(deleteBtn);
@@ -127,5 +153,36 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    sendAnalyticsEvent('page_view', {
+        page_title: 'Focus mode popup opened',
+    });
+
+
+    function sendAnalyticsEvent(eventName, eventData = {}) {
+        const url = `https://www.google-analytics.com/mp/collect?measurement_id=G-H8DV3RPYLD&api_secret=4vTnGdy6RbGlsphPmyOJTQ`;
+
+        const payload = {
+            client_id: clientId, // Unique user ID
+            events: [{
+                name: eventName,
+                params: eventData
+            }]
+        };
+
+        fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            console.log(`Event sent with name: ${eventName} and 
+                client Id: ${clientId} with response: ${response.status}`);
+        }).catch(error => {
+            console.error('Error sending event:', error);
+        });
+    }
+
 
 });

@@ -4,7 +4,7 @@ let reminderTimeout;
 let reminderInterval = 0; // 0 minutes
 
 // Load saved state from storage
-chrome.storage.sync.get(["isBlocking", "blockList", "reminderInterval"], (data) => {
+chrome.storage.sync.get(["isBlocking", "blockList", "reminderInterval", "clientId"], (data) => {
   if (data.isBlocking !== undefined) isBlocking = data.isBlocking;
   if (data.blockList) blockList = data.blockList;
   if (data.reminderInterval) reminderInterval = data.reminderInterval;
@@ -154,4 +154,3 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         chrome.tabs.create({ url: "distraction.html" });
     }
 });
-  

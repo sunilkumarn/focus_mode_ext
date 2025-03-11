@@ -3,7 +3,11 @@
     "name": "Focus Mode Blocker",
     "version": "1.0",
     "permissions": ["storage", "notifications", "declarativeNetRequest", "alarms", "tabs"],
-    "host_permissions": ["<all_urls>"],
+    "host_permissions": [
+      "<all_urls>", 
+      "https://www.google-analytics.com/*",
+      "https://www.googletagmanager.com/*"
+    ],
     "background": {
       "service_worker": "background.js"
     },
