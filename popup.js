@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         row.appendChild(input);
         row.appendChild(deleteBtn);
-        websitesContainer.appendChild(row);
+        websitesContainer.insertBefore(row, websitesContainer.firstChild);
     }
 
     function saveBlockList() {

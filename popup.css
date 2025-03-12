@@ -117,6 +117,8 @@ input:checked + .slider:before {
 
 #websites-container {
     margin-bottom: 15px;
+    max-height: 150px;
+    overflow: scroll;
 }
 
 .website-input-group {
