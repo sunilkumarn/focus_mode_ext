@@ -8,45 +8,155 @@
     </head>
     <body>
         <div id="popup" class="popup-container">
-            <section id="header" class="logo-section">
-                <h1>focus<span>mode</span></h1>
+            <header id="header" class="header">
+                <div class="logo-section">
+                    <h1>focus<span>mode</span></h1>
+                    <p class="subtitle">Block distractions</p>
+                </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="toggle-btn" />
                     <span class="slider round"></span>
                 </label>
-            </section>
+            </header>
+            <p id="toggle-status" class="toggle-status"></p>
 
-            <section id="block-current">
-                <button id="block-this-btn">
-                    <span class="block-icon">⊘</span> Block this site
-                </button>
-            </section>
-
-            <section id="website-list">
-                <h2>Your blocked websites</h2>
-                <div id="websites-container">
-                    <!-- Website inputs will be added here dynamically -->
+            <section id="reminder-settings" class="card">
+                <div class="card-header">
+                    <h2>Reminder Settings</h2>
                 </div>
-                <button id="add-website-btn">
-                    <span class="plus-icon">+</span> Add Website
-                </button>
-            </section>
-
-            <section id="reminder-settings">
-                <h2>Reminder Settings</h2>
+            <div class="reminder-row">
+                <div class="hint">
+                    If focus mode stays OFF,<br />remind me in
+                </div>
                 <div class="reminder-container">
-                    <span>Remind me in</span>
                     <select id="reminder-time">
-                        <option value="1">1 minute</option>
                         <option value="5">5 minutes</option>
                         <option value="10">10 minutes</option>
                         <option value="15">15 minutes</option>
                         <option value="30">30 minutes</option>
-                        <option value="60">1 hour</option>
-                        <option value="0">never</option>
                     </select>
-                    <span>to turn on focus mode</span>
                 </div>
+                </div>
+            </section>
+
+            <section id="website-list" class="card">
+                <div class="card-header">
+                    <h2>Blocked Websites</h2>
+                </div>
+                <div id="websites-container">
+                    <!-- Website inputs will be added here dynamically -->
+                </div>
+                <div class="list-actions">
+                    <button id="add-website-btn" class="secondary">
+                        <span class="plus-icon">+</span> Add Website
+                    </button>
+                    <button id="block-this-btn" class="primary">
+                        <span class="block-icon">⊘</span> Block This Site
+                    </button>
+                </div>
+                <p id="block-feedback" class="block-feedback"></p>
+            </section>
+
+            <section id="focus-lock" class="card">
+                <div class="card-header">
+                    <h2>Focus Lock</h2>
+                </div>
+                <p class="description">
+                    Lock blocked sites for a fixed period. Once locked, sites cannot be
+                    unblocked until the lock expires. Only uninstalling the extension
+                    removes the lock.
+                </p>
+                <label class="inline-field">
+                    <span>Lock Duration</span>
+                    <select id="lock-duration">
+                        <option value="1">1 day</option>
+                        <option value="3" selected>3 days</option>
+                        <option value="7">7 days</option>
+                        <option value="14">14 days</option>
+                    </select>
+                </label>
+                <div class="warning">
+                    <span class="warning-icon">⚠️</span>
+                    <span>This action cannot be undone during the lock period.</span>
+                </div>
+                <button id="lock-activate-btn" class="secondary full-width">
+                    Apply Focus Lock
+                </button>
+            </section>
+
+            <section id="work-session" class="card">
+                <div class="card-header">
+                    <h2>New Work Session</h2>
+                    <a id="view-past-sessions" class="header-link" href="#">View past sessions</a>
+                </div>
+
+                <div class="session-duration">
+                    <span class="label">Session Duration</span>
+                    <div class="duration-buttons">
+                        <button id="session-duration-45" class="chip">45 min</button>
+                        <button id="session-duration-60" class="chip">60 min</button>
+                        <button id="session-duration-90" class="chip selected">90 min</button>
+                        <button id="session-duration-120" class="chip">120 min</button>
+                    </div>
+                </div>
+
+                <div class="session-intent">
+                    <label for="session-intent">Session Intent</label>
+                    <textarea
+                        id="session-intent"
+                        placeholder="What do you want to work on in this session?"
+                        rows="2"
+                    ></textarea>
+                </div>
+
+                <div class="session-reminders">
+                    <div class="reminder-row">
+                        <div class="reminder-text">
+                            <div class="title">20-20-20 eye break reminder</div>
+                            <div class="sub">Every 20 minutes</div>
+                        </div>
+                        <label class="toggle-switch small">
+                            <input type="checkbox" id="eye-break-toggle" checked />
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="reminder-row">
+                        <div class="reminder-text">
+                            <div class="title">Water reminder</div>
+                        </div>
+                        <label class="toggle-switch small">
+                            <input type="checkbox" id="water-reminder-toggle" />
+                            <span class="slider round"></span>
+                        </label>
+                        <select id="water-interval">
+                            <option value="30">30 min</option>
+                            <option value="45" selected>45 min</option>
+                            <option value="60">60 min</option>
+                            <option value="90">90 min</option>
+                        </select>
+                    </div>
+
+                    <div class="reminder-row">
+                        <div class="reminder-text">
+                            <div class="title">Movement break</div>
+                        </div>
+                        <label class="toggle-switch small">
+                            <input type="checkbox" id="movement-reminder-toggle" />
+                            <span class="slider round"></span>
+                        </label>
+                        <select id="movement-interval">
+                            <option value="30">30 min</option>
+                            <option value="45" selected>45 min</option>
+                            <option value="60">60 min</option>
+                            <option value="90">90 min</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="start-session-btn" class="primary full-width">
+                    Start Work Session
+                </button>
             </section>
 
             <section id="footer">
