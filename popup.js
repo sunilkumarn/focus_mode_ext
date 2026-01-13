@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleStatus.classList.toggle("locked", isLocked);
         if (isLocked) {
             const lockLabel = getLockDurationDisplay();
-            toggleStatus.textContent = `Focus Lock is active for ${lockLabel}. Focus Mode toggle is disabled.`;
+            toggleStatus.textContent = `⚡ Focus Lock is active for ${lockLabel}. Focus Mode toggle is disabled.`;
             return;
         }
         toggleStatus.textContent = toggleBtn.checked
