@@ -64,6 +64,11 @@ h2 {
     color: #475569;
 }
 
+.toggle-status.locked {
+    font-weight: 700;
+    color: #b91c1c;
+}
+
 /* Toggle Switch */
 .toggle-switch {
     position: relative;
@@ -334,11 +339,91 @@ select:focus {
     color: #c2410c;
 }
 
+#focus-lock.locked {
+    position: relative;
+    filter: blur(0.2px);
+}
+
+#focus-lock.locked::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.08);
+    border-radius: 10px;
+    pointer-events: none;
+}
+
+.lock-confirmation {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 10px;
+}
+
+.lock-confirmation.visible {
+    display: block;
+}
+
+.lock-confirmation p {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #9f1239;
+    line-height: 1.45;
+}
+
+.lock-confirmation-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.lock-confirmation-actions .primary,
+.lock-confirmation-actions .secondary {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+}
+
+.lock-feedback {
+    display: none;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #b91c1c;
+    background: #fff7ed;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-height: 16px;
+}
+
+.lock-feedback.visible {
+    display: block;
+}
+
 .warning-icon {
     font-size: 16px;
 }
 
 /* Work session */
+#work-session {
+    margin-bottom: 6px;
+    position: relative;
+}
+
+#work-session .session-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.12);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#work-session.active .session-overlay {
+    display: block;
+}
+
 .session-duration {
     margin-bottom: 12px;
 }
@@ -353,6 +438,41 @@ select:focus {
 .duration-buttons {
     display: flex;
     gap: 8px;
+}
+
+.session-status {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #0f172a;
+}
+
+.session-status.active {
+    color: #16a34a;
+    font-style: italic;
+    animation: session-blink 1.2s ease-in-out infinite;
+}
+
+.session-status.done {
+    color: #b91c1c;
+    font-weight: 700;
+    font-style: normal;
+    background: #d1fae5;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+@keyframes session-blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.35; }
+    100% { opacity: 1; }
+}
+
+.session-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
 }
 
 .chip {

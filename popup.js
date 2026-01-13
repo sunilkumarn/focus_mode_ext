@@ -10,6 +10,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const blockFeedback = document.getElementById("block-feedback");
     const lockDurationSelect = document.getElementById("lock-duration");
     const lockActivateBtn = document.getElementById("lock-activate-btn");
+    const lockConfirmation = document.getElementById("lock-confirmation");
+    const lockConfirmText = document.getElementById("lock-confirmation-text");
+    const lockConfirmYes = document.getElementById("lock-confirm-yes");
+    const lockConfirmNo = document.getElementById("lock-confirm-no");
+    const lockApplyFeedback = document.getElementById("lock-apply-feedback");
+    const focusLockSection = document.getElementById("focus-lock");
 
     const sessionDuration45 = document.getElementById("session-duration-45");
     const sessionDuration60 = document.getElementById("session-duration-60");
@@ -17,6 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const sessionDuration120 = document.getElementById("session-duration-120");
     const sessionIntentInput = document.getElementById("session-intent");
     const startSessionBtn = document.getElementById("start-session-btn");
+    const endSessionBtn = document.getElementById("end-session-btn");
+    const sessionStatusMessage = document.getElementById("session-status-message");
+    const viewPastSessionsLink = document.getElementById("view-past-sessions");
+    const sessionDoneMessage = "Work session done! Now breathe, relax, rest up, stretch and celebrate.";
+    const workSessionSection = document.getElementById("work-session");
 
     const eyeBreakToggle = document.getElementById("eye-break-toggle");
     const waterReminderToggle = document.getElementById("water-reminder-toggle");
@@ -28,6 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let blockFeedbackTimeout;
     let isLocked = false;
     let lockUntil = null;
+    let lockDurationDays = null;
+    let lockApplyFeedbackTimeout;
+    console.log("lockUntil", lockUntil);
     let sessionDefaults = {
         durationMinutes: 60,
         eyeBreakEnabled: true,
@@ -37,6 +51,9 @@ document.addEventListener("DOMContentLoaded", () => {
         movementReminderInterval: 60,
     };
     let selectedSessionDuration = sessionDefaults.durationMinutes;
+    let activeSession = null;
+    let sessionStatusInterval = null;
+    let sessionStatusClearTimeout = null;
 
     function getRootDomain(url) {
         const parts = url.split(".");
@@ -56,12 +73,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateToggleStatus () {
         if (!toggleStatus) return;
+        toggleStatus.classList.toggle("locked", isLocked);
+        if (isLocked) {
+            const lockLabel = getLockDurationDisplay();
+            toggleStatus.textContent = `Focus Lock is active for ${lockLabel}. Focus Mode toggle is disabled.`;
+            return;
+        }
         toggleStatus.textContent = toggleBtn.checked
             ? "Distractions are blocked"
             : "Distractions are allowed";
     }
 
     function applyLockStateToUI() {
+        console.log("LockDuration", lockDurationSelect);
+        console.log("lockUntil+applyLockStateToUI", lockUntil);
         isLocked = !!(lockUntil && lockUntil > Date.now());
 
         const deleteButtons = websitesContainer
@@ -77,6 +102,176 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (lockDurationSelect) {
             lockDurationSelect.disabled = false;
         }
+
+        if (toggleBtn) {
+            toggleBtn.disabled = isLocked;
+        }
+
+        if (lockActivateBtn) {
+            lockActivateBtn.disabled = isLocked;
+        }
+
+        if (focusLockSection) {
+            focusLockSection.classList.toggle("locked", isLocked);
+        }
+
+        updateToggleStatus();
+    }
+
+    function getRemainingLockDays() {
+        if (!lockUntil) return null;
+        const msRemaining = lockUntil - Date.now();
+        if (msRemaining <= 0) return null;
+        return Math.ceil(msRemaining / (24 * 60 * 60 * 1000));
+    }
+
+    function getLockDurationDisplay() {
+        const remaining = getRemainingLockDays();
+        const base = remaining || lockDurationDays;
+        if (typeof base === "number" && base > 0) {
+            return `${base} day${base === 1 ? "" : "s"}`;
+        }
+        return "the selected period";
+    }
+
+    function getSelectedLockDurationLabel() {
+        if (!lockDurationSelect) return "the selected period";
+        const option = lockDurationSelect.options[lockDurationSelect.selectedIndex];
+        return option ? option.textContent.trim() : "the selected period";
+    }
+
+    function showLockConfirmation() {
+        if (!lockConfirmation || !lockConfirmText) {
+            handleLockActivation();
+            return;
+        }
+
+        const durationLabel = getSelectedLockDurationLabel();
+        lockConfirmText.textContent = `You cannot access your blocked websites for ${durationLabel}. The only way you can do so is to uninstall this application. Are you sure to proceed?`;
+        lockConfirmation.classList.add("visible");
+    }
+
+    function hideLockConfirmation() {
+        if (lockConfirmation) {
+            lockConfirmation.classList.remove("visible");
+        }
+    }
+
+    function showLockAppliedFeedback(days) {
+        if (!lockApplyFeedback) return;
+        lockApplyFeedback.textContent = `Focus Lock applied for ${days} day${days === 1 ? "" : "s"}.`;
+        lockApplyFeedback.classList.add("visible");
+        if (lockApplyFeedbackTimeout) {
+            clearTimeout(lockApplyFeedbackTimeout);
+        }
+        lockApplyFeedbackTimeout = setTimeout(() => {
+            lockApplyFeedback.textContent = "";
+            lockApplyFeedback.classList.remove("visible");
+        }, 5000);
+    }
+
+    function forceFocusModeOn() {
+        if (toggleBtn) {
+            toggleBtn.checked = true;
+        }
+        updateReminderVisibility();
+        updateToggleStatus();
+        chrome.runtime.sendMessage({ action: "setBlockingState", isBlocking: true });
+    }
+
+    function updateSessionUI() {
+        const wasActive =
+            activeSession && activeSession.isActive && activeSession.endTime > Date.now();
+        const now = Date.now();
+        if (activeSession && activeSession.endTime <= now) {
+            activeSession = null;
+        }
+
+        const hasActive = !!(activeSession && activeSession.isActive && activeSession.endTime > now);
+
+        if (sessionStatusMessage) {
+            if (hasActive) {
+                const remainingMinutes = Math.max(
+                    1,
+                    Math.round((activeSession.endTime - now) / 60000)
+                );
+                sessionStatusMessage.textContent = `Ongoing work session, keep going. We will break in ${remainingMinutes} minutes.`;
+                sessionStatusMessage.classList.add("active");
+                sessionStatusMessage.classList.remove("done");
+                if (sessionStatusClearTimeout) {
+                    clearTimeout(sessionStatusClearTimeout);
+                    sessionStatusClearTimeout = null;
+                }
+            } else {
+                if (wasActive) {
+                    sessionStatusMessage.textContent = sessionDoneMessage;
+                    sessionStatusMessage.classList.remove("active");
+                    sessionStatusMessage.classList.add("done");
+                    if (sessionStatusClearTimeout) {
+                        clearTimeout(sessionStatusClearTimeout);
+                    }
+                    sessionStatusClearTimeout = setTimeout(() => {
+                        sessionStatusMessage.textContent = "";
+                        sessionStatusMessage.classList.remove("done");
+                    }, 30000);
+                } else {
+                    sessionStatusMessage.textContent = "";
+                    sessionStatusMessage.classList.remove("active");
+                    sessionStatusMessage.classList.remove("done");
+                    if (sessionStatusClearTimeout) {
+                        clearTimeout(sessionStatusClearTimeout);
+                        sessionStatusClearTimeout = null;
+                    }
+                }
+            }
+        }
+
+        // Disable editing intent during an active session
+        if (sessionIntentInput) {
+            sessionIntentInput.disabled = hasActive;
+        }
+
+        // Dim and lock the card; allow only Close Work Session button to remain usable
+        if (workSessionSection) {
+            workSessionSection.classList.toggle("active", hasActive);
+        }
+
+        const lockableControls = workSessionSection
+            ? workSessionSection.querySelectorAll(
+                  ".session-duration button, #start-session-btn, .session-intent textarea, .session-reminders input, .session-reminders select"
+              )
+            : [];
+        lockableControls.forEach((el) => {
+            if (el === endSessionBtn) return;
+            el.disabled = hasActive;
+        });
+        if (endSessionBtn) {
+            endSessionBtn.disabled = false;
+        }
+
+        if (startSessionBtn) {
+            startSessionBtn.style.display = hasActive ? "none" : "block";
+        }
+        if (endSessionBtn) {
+            endSessionBtn.style.display = hasActive ? "block" : "none";
+        }
+    }
+
+    function startSessionStatusTicker() {
+        if (sessionStatusInterval) {
+            clearInterval(sessionStatusInterval);
+        }
+        sessionStatusInterval = setInterval(updateSessionUI, 30000);
+    }
+
+    function syncActiveSessionFromStorage(sessionData) {
+        if (sessionData && sessionData.isActive && sessionData.endTime > Date.now()) {
+            activeSession = sessionData;
+        } else {
+            activeSession = null;
+        }
+        updateSessionUI();
+        startSessionStatusTicker();
     }
 
     function handleLockActivation() {
@@ -84,10 +279,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const days = parseInt(lockDurationSelect.value, 10);
         if (!days || isNaN(days)) return;
 
+        lockDurationDays = days;
         lockUntil = Date.now() + days * 24 * 60 * 60 * 1000;
 
-        chrome.storage.local.set({ lockUntil }, () => {
+        chrome.storage.local.set({ lockUntil, lockDurationDays }, () => {
             applyLockStateToUI();
+            showLockAppliedFeedback(days);
+            forceFocusModeOn();
         });
     }
 
@@ -116,6 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "focusReminderMinutes",
             "clientId",
             "lockUntil",
+            "lockDurationDays",
             "sessionDefaults",
             "currentSession",
         ],
@@ -145,6 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Load lock state
+        if (typeof data.lockDurationDays === "number") {
+            lockDurationDays = data.lockDurationDays;
+        }
         if (typeof data.lockUntil === "number") {
             lockUntil = data.lockUntil;
             applyLockStateToUI();
@@ -171,6 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (sessionIntentInput && activeSession && activeSession.intent) {
             sessionIntentInput.value = activeSession.intent;
         }
+        syncActiveSessionFromStorage(activeSession);
 
         if (eyeBreakToggle) {
             eyeBreakToggle.checked =
@@ -230,6 +433,13 @@ document.addEventListener("DOMContentLoaded", () => {
             updateToggleStatus();
         });
     });
+
+    if (viewPastSessionsLink) {
+        viewPastSessionsLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            chrome.tabs.create({ url: chrome.runtime.getURL("session-history.html") });
+        });
+    }
 
     // Block current website button
     if (blockThisBtn) {
@@ -309,6 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Handle delete clicks via event delegation to ensure all rows (existing and new) respond
     if (websitesContainer) {
         websitesContainer.addEventListener("click", (event) => {
+            console.log("event", event);
             const target = event.target;
             const deleteBtn = target.closest(".delete-btn");
             if (!deleteBtn) return;
@@ -369,10 +580,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Focus Lock wiring
     if (lockActivateBtn) {
-        lockActivateBtn.addEventListener("click", handleLockActivation);
+        lockActivateBtn.addEventListener("click", showLockConfirmation);
     } else if (lockDurationSelect) {
         // If there is no explicit button, activating the lock on change
-        lockDurationSelect.addEventListener("change", handleLockActivation);
+        lockDurationSelect.addEventListener("change", showLockConfirmation);
+    }
+
+    if (lockConfirmYes) {
+        lockConfirmYes.addEventListener("click", () => {
+            hideLockConfirmation();
+            handleLockActivation();
+        });
+    }
+
+    if (lockConfirmNo) {
+        lockConfirmNo.addEventListener("click", () => {
+            hideLockConfirmation();
+        });
     }
 
     // Session duration selection
@@ -475,15 +699,60 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     if (response && response.success) {
+                        activeSession = {
+                            ...config,
+                            isActive: true,
+                            startTime: Date.now(),
+                            endTime: Date.now() + config.durationMinutes * 60 * 1000,
+                        };
                         // Ensure the Focus Mode toggle reflects that it's now ON
                         if (toggleBtn) {
                             toggleBtn.checked = true;
                             updateReminderVisibility();
                             updateToggleStatus();
                         }
+                        updateSessionUI();
+                        startSessionStatusTicker();
                     }
                 }
             );
+        });
+    }
+
+    console.log("endSessionBtn", endSessionBtn);
+
+    if (endSessionBtn) {
+        endSessionBtn.addEventListener("click", () => {
+            console.log("endSessionBtn clicked");
+            const previousSession = activeSession;
+            // Optimistically clear local state so buttons swap immediately
+            activeSession = null;
+            updateSessionUI();
+            chrome.runtime.sendMessage({ action: "endWorkSession" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Error ending work session:", chrome.runtime.lastError);
+                    // Restore prior state on error
+                    activeSession = previousSession;
+                    updateSessionUI();
+                    return;
+                }
+                if (response && response.success) {
+                    activeSession = null;
+                    updateSessionUI();
+                    if (sessionStatusMessage) {
+                        sessionStatusMessage.textContent = sessionDoneMessage;
+                        sessionStatusMessage.classList.remove("active");
+                        sessionStatusMessage.classList.add("done");
+                        if (sessionStatusClearTimeout) {
+                            clearTimeout(sessionStatusClearTimeout);
+                        }
+                        sessionStatusClearTimeout = setTimeout(() => {
+                            sessionStatusMessage.textContent = "";
+                            sessionStatusMessage.classList.remove("done");
+                        }, 30000);
+                    }
+                }
+            });
         });
     }
 

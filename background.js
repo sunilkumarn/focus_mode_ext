@@ -3,10 +3,19 @@ let blockList = []; // Default blocklist
 let focusReminderMinutes = 10; // Default reminder when focus mode is OFF
 let lockUntil = null; // Timestamp in ms
 let currentSession = null; // Stores active session details
+const HISTORY_KEY = "history_of_work_Sessions";
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Load saved state from storage.local
 chrome.storage.local.get(
-  ["isBlocking", "blockList", "focusReminderMinutes", "lockUntil", "currentSession"],
+  [
+    "isBlocking",
+    "blockList",
+    "focusReminderMinutes",
+    "lockUntil",
+    "currentSession",
+    HISTORY_KEY,
+  ],
   (data) => {
     if (typeof data.isBlocking === "boolean") isBlocking = data.isBlocking;
     if (Array.isArray(data.blockList)) blockList = data.blockList;
@@ -25,6 +34,14 @@ chrome.storage.local.get(
         // Session has expired while the extension was not running
         currentSession.isActive = false;
         chrome.storage.local.set({ currentSession });
+      }
+    }
+
+    // Prune stale session history (older than one week)
+    if (Array.isArray(data[HISTORY_KEY])) {
+      const pruned = pruneSessionHistory(data[HISTORY_KEY]);
+      if (pruned.length !== data[HISTORY_KEY].length) {
+        chrome.storage.local.set({ [HISTORY_KEY]: pruned });
       }
     }
 
@@ -88,6 +105,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
   } else if (message.action === "startWorkSession") {
     startWorkSession(message.config || {}, sendResponse);
+  } else if (message.action === "endWorkSession") {
+    endWorkSession(sendResponse);
   }
 
   return true; // Keeps the message port open for asynchronous response
@@ -243,6 +262,35 @@ function clearSessionAlarms(callback) {
   });
 }
 
+function pruneSessionHistory(history) {
+  const cutoff = Date.now() - ONE_WEEK_MS;
+  return history.filter(
+    (entry) => entry && typeof entry.startTime === "number" && entry.startTime >= cutoff
+  );
+}
+
+function makeSessionHistoryEntry(session, reason = "completed") {
+  const actualEndTime = session.actualEndTime || session.endTime || Date.now();
+  return {
+    id: `session_${session.startTime}_${Math.random().toString(36).slice(2, 8)}`,
+    startTime: session.startTime,
+    endTime: actualEndTime,
+    completedReason: reason,
+    actualDurationMinutes: Math.max(
+      1,
+      Math.round((actualEndTime - session.startTime) / 60000)
+    ),
+    durationMinutes: session.durationMinutes,
+    intent: session.intent || "",
+    eyeBreakEnabled: !!session.eyeBreakEnabled,
+    waterReminderEnabled: !!session.waterReminderEnabled,
+    waterReminderInterval: session.waterReminderInterval,
+    movementReminderEnabled: !!session.movementReminderEnabled,
+    movementReminderInterval: session.movementReminderInterval,
+    createdAt: Date.now(),
+  };
+}
+
 function startWorkSession(config, sendResponse) {
   const now = Date.now();
   const durationMinutes = Number(config.durationMinutes) || 60;
@@ -259,20 +307,23 @@ function startWorkSession(config, sendResponse) {
     waterReminderInterval: Number(config.waterReminderInterval) || 60,
     movementReminderEnabled: !!config.movementReminderEnabled,
     movementReminderInterval: Number(config.movementReminderInterval) || 60,
+    historyRecorded: false,
+    actualEndTime: null,
+  };
+
+  const sessionDefaultsToPersist = {
+    durationMinutes,
+    eyeBreakEnabled: currentSession.eyeBreakEnabled,
+    waterReminderEnabled: currentSession.waterReminderEnabled,
+    waterReminderInterval: currentSession.waterReminderInterval,
+    movementReminderEnabled: currentSession.movementReminderEnabled,
+    movementReminderInterval: currentSession.movementReminderInterval,
   };
 
   chrome.storage.local.set(
     {
       currentSession,
-      // Persist last-used defaults for next session setup
-      sessionDefaults: {
-        durationMinutes,
-        eyeBreakEnabled: currentSession.eyeBreakEnabled,
-        waterReminderEnabled: currentSession.waterReminderEnabled,
-        waterReminderInterval: currentSession.waterReminderInterval,
-        movementReminderEnabled: currentSession.movementReminderEnabled,
-        movementReminderInterval: currentSession.movementReminderInterval,
-      },
+      sessionDefaults: sessionDefaultsToPersist,
     },
     () => {
       if (chrome.runtime.lastError) {
@@ -295,6 +346,59 @@ function startWorkSession(config, sendResponse) {
   );
 }
 
+function recordSessionHistory(session, reason, callback) {
+  chrome.storage.local.get([HISTORY_KEY], (data) => {
+    const history = Array.isArray(data[HISTORY_KEY]) ? data[HISTORY_KEY] : [];
+    const prunedHistory = pruneSessionHistory(history);
+    prunedHistory.unshift(makeSessionHistoryEntry(session, reason));
+
+    chrome.storage.local.set({ [HISTORY_KEY]: prunedHistory }, () => {
+      if (chrome.runtime.lastError) {
+        console.error("Error saving session history:", chrome.runtime.lastError);
+      }
+      if (typeof callback === "function") callback();
+    });
+  });
+}
+
+function completeCurrentSession(reason, callback) {
+  chrome.storage.local.get(["currentSession"], (data) => {
+    const session = data.currentSession;
+    if (!session || !session.isActive) {
+      if (typeof callback === "function") callback({ success: true, message: "No active session" });
+      return;
+    }
+
+    if (session.historyRecorded) {
+      session.isActive = false;
+      chrome.storage.local.set({ currentSession: session }, () => {
+        if (typeof callback === "function") callback({ success: true });
+      });
+      return;
+    }
+
+    session.isActive = false;
+    session.actualEndTime = Date.now();
+    session.historyRecorded = true;
+
+    clearSessionAlarms(() => {
+      recordSessionHistory(session, reason, () => {
+        chrome.storage.local.set({ currentSession: session }, () => {
+          if (typeof callback === "function") callback({ success: true });
+        });
+      });
+    });
+  });
+}
+
+function endWorkSession(sendResponse) {
+  completeCurrentSession("manual_end", (result) => {
+    if (typeof sendResponse === "function") {
+      sendResponse(result);
+    }
+  });
+}
+
 // Listen for alarm triggers
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "focusModeReminder") {
@@ -315,10 +419,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       if (!session || !session.isActive) return;
 
       if (session.endTime <= Date.now()) {
-        session.isActive = false;
-        chrome.storage.local.set({ currentSession: session }, () => {
-          clearSessionAlarms();
-        });
+        completeCurrentSession("auto_end");
       }
     });
   } else if (alarm.name === "eyeBreakReminder") {

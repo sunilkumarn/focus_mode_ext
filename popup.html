@@ -82,6 +82,14 @@
                 <button id="lock-activate-btn" class="secondary full-width">
                     Apply Focus Lock
                 </button>
+                <div id="lock-confirmation" class="lock-confirmation">
+                    <p id="lock-confirmation-text"></p>
+                    <div class="lock-confirmation-actions">
+                        <button id="lock-confirm-yes" class="primary">Yes, apply lock</button>
+                        <button id="lock-confirm-no" class="secondary">No, go back</button>
+                    </div>
+                </div>
+                <p id="lock-apply-feedback" class="lock-feedback"></p>
             </section>
 
             <section id="work-session" class="card">
@@ -89,6 +97,7 @@
                     <h2>New Work Session</h2>
                     <a id="view-past-sessions" class="header-link" href="#">View past sessions</a>
                 </div>
+                <p id="session-status-message" class="session-status"></p>
 
                 <div class="session-duration">
                     <span class="label">Session Duration</span>
@@ -154,13 +163,20 @@
                     </div>
                 </div>
 
-                <button id="start-session-btn" class="primary full-width">
-                    Start Work Session
-                </button>
+                <div class="session-overlay" aria-hidden="true"></div>
+
+                <div class="session-actions">
+                    <button id="start-session-btn" class="primary full-width">
+                        Start Work Session
+                    </button>
+                    <button id="end-session-btn" class="secondary full-width">
+                        Close Work Session
+                    </button>
+                </div>
             </section>
 
             <section id="footer">
-                <p>Avoid distractions, stay focussed!</p>
+                <p>The penalty for procrastinating is the loss of dreams and hopes! Stay focussed.</p>
             </section>
         </div>
 
