@@ -1,6 +1,6 @@
 let isBlocking = false;
 let blockList = []; // Default blocklist
-let focusReminderMinutes = 10; // Default reminder when focus mode is OFF
+let focusReminderMinutes = 0; // Default reminder when focus mode is OFF (0 = None)
 let lockUntil = null; // Timestamp in ms
 let currentSession = null; // Stores active session details
 const HISTORY_KEY = "history_of_work_Sessions";
@@ -21,6 +21,9 @@ chrome.storage.local.get(
     if (Array.isArray(data.blockList)) blockList = data.blockList;
     if (typeof data.focusReminderMinutes === "number") {
       focusReminderMinutes = data.focusReminderMinutes;
+    } else if (typeof data.focusReminderMinutes === "string") {
+      const parsed = parseInt(data.focusReminderMinutes, 10);
+      focusReminderMinutes = !isNaN(parsed) && parsed >= 0 ? parsed : 0;
     }
     if (typeof data.lockUntil === "number") {
       lockUntil = data.lockUntil;
@@ -93,7 +96,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     });
   } else if (message.action === "updateFocusReminderMinutes") {
-    focusReminderMinutes = message.minutes;
+    const parsedMinutes = parseInt(message.minutes, 10);
+    focusReminderMinutes = !isNaN(parsedMinutes) && parsedMinutes >= 0 ? parsedMinutes : 0;
     chrome.storage.local.set({ focusReminderMinutes }, () => {
       if (chrome.runtime.lastError) {
         console.error("Error saving focus reminder minutes:", chrome.runtime.lastError);
@@ -404,13 +408,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "focusModeReminder") {
     chrome.storage.local.get("isBlocking", (data) => {
       if (!data.isBlocking) {
-        chrome.notifications.create("focusModeReminderNotification", {
-          type: "basic",
-          iconUrl: "icons/icon_on_128.png",
-          title: "Turn Focus Mode back ON",
-          message: "Focus Mode is still OFF. Turn it on to block distracting sites.",
-          priority: 1,
-        });
+        chrome.tabs.create({ url: chrome.runtime.getURL("distraction.html") });
       }
     });
   } else if (alarm.name === "sessionEnd") {

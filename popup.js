@@ -80,8 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         toggleStatus.textContent = toggleBtn.checked
-            ? "Distractions are blocked"
-            : "Distractions are allowed";
+            ? "Distractions are blocked!"
+            : "Distractions might slide in. Enable deep lock to block them!";
     }
 
     function applyLockStateToUI() {
@@ -338,7 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const savedReminderMinutes =
             typeof data.focusReminderMinutes === "number"
                 ? data.focusReminderMinutes
-                : 10;
+                : 0;
         if (reminderTime) {
             reminderTime.value = savedReminderMinutes.toString();
         }
@@ -405,13 +405,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (reminderTime) {
         reminderTime.addEventListener("change", () => {
             const minutes = parseInt(reminderTime.value, 10);
+            const normalizedMinutes = isNaN(minutes) ? 0 : minutes;
             sendAnalyticsEvent('set_focus_reminder', {
-                reminder_time: minutes
+                reminder_time: normalizedMinutes
             });
-            chrome.storage.local.set({ focusReminderMinutes: minutes }, () => {
+            chrome.storage.local.set({ focusReminderMinutes: normalizedMinutes }, () => {
                 chrome.runtime.sendMessage({
                     action: "updateFocusReminderMinutes",
-                    minutes,
+                    minutes: normalizedMinutes,
                 });
             });
         });
@@ -426,7 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 toggleBtn.checked = !toggleBtn.checked; // Revert if there was an error
             }
 
-            let event = toggleBtn.checked ? 'focusmode_on' : 'focusmode_off'
+            let event = toggleBtn.checked ? 'deeplock_on' : 'deeplock_off'
             sendAnalyticsEvent(event)
 
             updateReminderVisibility() ; 

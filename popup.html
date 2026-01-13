@@ -3,14 +3,14 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Focus Mode</title>
+        <title>DeepLock</title>
         <link rel="stylesheet" href="popup.css" />
     </head>
     <body>
         <div id="popup" class="popup-container">
             <header id="header" class="header">
                 <div class="logo-section">
-                    <h1>focus<span>mode</span></h1>
+                    <h1>deep<span>lock</span></h1>
                     <p class="subtitle">Focus, built through repetitions.</p>
                 </div>
                 <label class="toggle-switch">
@@ -26,10 +26,12 @@
                 </div>
             <div class="reminder-row">
                 <div class="hint">
-                    If focus mode stays OFF,<br />remind me in
+                    If deep lock stays OFF,<br />remind me in
                 </div>
                 <div class="reminder-container">
                     <select id="reminder-time">
+                        <option value="0" selected>NEVER</option>
+                        <option value="1">1 minute</option>
                         <option value="5">5 minutes</option>
                         <option value="10">10 minutes</option>
                         <option value="15">15 minutes</option>
@@ -59,7 +61,7 @@
 
             <section id="focus-lock" class="card">
                 <div class="card-header">
-                    <h2>Focus Lock</h2>
+                    <h2>Prolonged Focus Lock</h2>
                 </div>
                 <p class="description">
                     Lock blocked sites for a fixed period. Once locked, sites cannot be
@@ -148,7 +150,11 @@
 
                     <div class="reminder-row">
                         <div class="reminder-text">
-                            <div class="title">Movement break</div>
+                            <div class="title">
+                                <a href="https://www.youtube.com/watch?v=aPYCiuiB4PA" target="_blank" rel="noopener noreferrer">
+                                    Squat break
+                                </a>
+                            </div>
                         </div>
                         <label class="toggle-switch small">
                             <input type="checkbox" id="movement-reminder-toggle" />
